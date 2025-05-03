@@ -1,6 +1,5 @@
 import os
 import requests
-from dotenv import load_dotenv
 from .models import Reviews, WishList
 from .serializers import ReviewsSerializer, UserSerializer, WishListSerializer
 from django.contrib.auth.models import User
@@ -9,8 +8,6 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-
-load_dotenv()
 
 GOOGLE_BOOKS_API_URL = os.getenv("GOOGLE_BOOKS_API_URL")
 GOOGLE_BOOKS_API_KEY = os.getenv("GOOGLE_BOOKS_API_KEY")
