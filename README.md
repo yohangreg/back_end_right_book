@@ -51,3 +51,46 @@ python manage.py createsuperuser
 
 # Inicie o servidor
 python manage.py runserver
+
+---
+
+## 🐳 Rodando com Docker (alternativa)
+
+Se preferir rodar a aplicação com Docker, siga os passos abaixo:
+
+### Pré-requisitos
+
+- [Docker](https://www.docker.com/)
+- [Docker Compose](https://docs.docker.com/compose/)
+
+### ⚙️ Configuração
+
+1. **Configure seu arquivo `.env`**:  
+   Copie o arquivo de exemplo e edite com suas variáveis de ambiente:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Build e subida dos containers**:
+
+   ```bash
+   docker-compose up --build
+   ```
+
+   Isso irá:
+   - Construir a imagem da aplicação
+   - Subir o container da API
+   - A API ficará acessível em `http://localhost:8000`
+
+### 🔄 Comandos úteis
+
+- Parar os containers:
+  ```bash
+  docker-compose down
+  ```
+
+- Subir sem rebuild:
+  ```bash
+  docker-compose up
+  ```
