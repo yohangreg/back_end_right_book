@@ -34,8 +34,10 @@ def registrar_usuario(request):
     email = request.data.get("email")
     username = request.data.get("username")
     password = request.data.get("password")
+    first_name = request.data.get("first_name")
+    last_name = request.data.get("last_name")
 
-    if not email or not username or not password:
+    if not email or not first_name or not last_name or not password:
         return Response({"error": "Preencha todos os campos"}, status=status.HTTP_400_BAD_REQUEST)
 
     if User.objects.filter(email=email).exists():
@@ -44,17 +46,17 @@ def registrar_usuario(request):
     if User.objects.filter(username=username).exists():
         return Response({"error": "Usuário já existe"}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = User.objects.create_user(email=email, username=username, password=password)
+    user = User.objects.create_user(email=email, username=username, password=password, first_name=first_name, last_name=last_name)
     token, _ = Token.objects.get_or_create(user=user)
     return Response({"token": token.key}, status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_usuario(request):
-    username = request.data.get("username")
+    email = request.data.get("email")
     password = request.data.get("password")
 
-    user = User.objects.filter(username=username).first()
+    user = User.objects.filter(email=email).first()
     if user and user.check_password(password):
         token, _ = Token.objects.get_or_create(user=user)
         return Response({"token": token.key}, status=status.HTTP_200_OK)
@@ -99,13 +101,13 @@ def logout_usuario(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def buscar_username(request):
-    username = request.query_params.get("username")  # Obtém o username da query string
+def buscar_user_email(request):
+    email = request.query_params.get("email")
 
-    if not username:
-        return Response({"error": "O parâmetro 'username' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
+    if not email:
+        return Response({"error": "O parâmetro 'email' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = User.objects.filter(username=username).first()
+    user = User.objects.filter(email=email).first()
 
     if not user:
         return Response({"error": "Usuário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
@@ -114,6 +116,8 @@ def buscar_username(request):
         "id": user.id,
         "username": user.username,
         "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
         "data_criacao": user.date_joined.strftime("%Y-%m-%d %H:%M:%S"),
         "ultimo_login": user.last_login.strftime("%Y-%m-%d %H:%M:%S") if user.last_login else "Nunca logou",
     }
@@ -252,6 +256,7 @@ def buscar_id(request, id):
     
     livro_formatado = {
         "id": data.get("id"),
+        "isbn": volume_info.get("industryIdentifiers", "ISBNs não informados"),
         "titulo": volume_info.get("title", "Título não disponível"),
         "autores": volume_info.get("authors", ["Autor desconhecido"]),
         "descricao": volume_info.get("description", "Sem descrição"),

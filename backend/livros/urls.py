@@ -9,7 +9,7 @@ urlpatterns = [
 ]
 
 urlpatterns += [
-    path('search/user/', views.buscar_username, name='buscar_username'),
+    path('search/user/', views.buscar_user_email, name='buscar_user_email'),
 ]
 
 urlpatterns += [

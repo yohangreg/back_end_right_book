@@ -11,7 +11,7 @@ class ReviewsSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'is_staff']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff']
         db_table = "Users" 
 
 class WishListSerializer(serializers.ModelSerializer):
