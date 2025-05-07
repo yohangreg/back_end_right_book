@@ -3,6 +3,7 @@ import requests
 from .models import Reviews, WishList
 from .serializers import ReviewsSerializer, UserSerializer, WishListSerializer
 from django.contrib.auth.models import User
+from django.db.models import Avg
 from rest_framework import status, viewsets 
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
@@ -118,6 +119,62 @@ def buscar_username(request):
     }
 
     return Response(user_data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def listar_livros_relevantes(request):
+    # Parâmetros de paginação
+    page = int(request.query_params.get("page", 1))
+    page_size = int(request.query_params.get("page_size", 20))
+
+    if page < 1 or page_size < 1:
+        return Response({"error": "page e page_size devem ser maiores que 0."}, status=status.HTTP_400_BAD_REQUEST)
+
+    start_index = (page - 1) * page_size
+
+    params = {
+        "q": "+populares",  # Palavra-chave genérica para popularidade
+        "orderBy": "relevance",
+        "startIndex": start_index,
+        "maxResults": page_size,
+        "langRestrict": "pt",  # Apenas livros em português
+        "key": GOOGLE_BOOKS_API_KEY
+    }
+
+    response = requests.get(GOOGLE_BOOKS_API_URL, params=params)
+
+    if response.status_code == 200:
+        data = response.json()
+        livros_formatados = []
+
+        for livro in data.get("items", []):
+            nota = search_review_by_book(livro.get("id"))
+            volume_info = livro.get("volumeInfo", {})
+            livros_formatados.append({
+                "id": livro.get("id"),
+                "isbn": volume_info.get("industryIdentifiers", "ISBNs não informados"),
+                "titulo": volume_info.get("title", "Título não disponível"),
+                "autores": volume_info.get("authors", ["Autor desconhecido"]),
+                "descricao": volume_info.get("description", "Sem descrição"),
+                "data_publicacao": volume_info.get("publishedDate", "Data não disponível"),
+                "paginas": volume_info.get("pageCount", "Não informado"),
+                "categorias": volume_info.get("categories", []),
+                "imagem": volume_info.get("imageLinks", {}).get("thumbnail", None),
+                "nota": nota
+            })
+
+        return Response({
+            "pagina_atual": page,
+            "tamanho_pagina": page_size,
+            "total_itens": data.get("totalItems", 0),
+            "livros": livros_formatados
+        }, status=status.HTTP_200_OK)
+
+    return Response({"error": "Erro ao buscar livros."}, status=response.status_code)
+
+def search_review_by_book(id):
+    avg_nota = Reviews.objects.filter(livro=id).aggregate(media=Avg('nota'))['media']
+    return round(avg_nota) if avg_nota is not None else None
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

@@ -15,6 +15,7 @@ urlpatterns += [
 urlpatterns += [
     path('search-book', views.buscar_livro, name='buscar_livro'),
     path('search-book/<str:id>/', views.buscar_id, name='buscar_id'),
+    path('search-book/all', views.listar_livros_relevantes, name='listar_livros'),
 ]
 
 urlpatterns += [
