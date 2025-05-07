@@ -125,7 +125,7 @@ def buscar_user_email(request):
     return Response(user_data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def listar_livros_relevantes(request):
     # Parâmetros de paginação
     page = int(request.query_params.get("page", 1))
@@ -181,7 +181,7 @@ def search_review_by_book(id):
     return round(avg_nota) if avg_nota is not None else None
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def buscar_livro(request):
     # Obtém os parâmetros de busca
     titulo = request.query_params.get("titulo")
@@ -238,7 +238,7 @@ def buscar_livro(request):
     return Response({"error": "Erro ao buscar livros."}, status=response.status_code)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def buscar_id(request, id):
     """
     Busca um livro pelo ID na API do Google Books e retorna informações formatadas.
@@ -271,7 +271,6 @@ def buscar_id(request, id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def buscar_avaliacoes_por_usuario(request, id):
-
     if not id:
         return Response({"error": "Usuário não encontrado"}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -279,7 +278,7 @@ def buscar_avaliacoes_por_usuario(request, id):
 
     if not reviews.exists():
         return Response({"error": "Nenhuma avaliação encontrada para este usuário"}, status=status.HTTP_404_NOT_FOUND)
-    
+
     serialized_reviews = ReviewsSerializer(reviews, many=True)
 
     return Response(serialized_reviews.data, status=status.HTTP_200_OK)
