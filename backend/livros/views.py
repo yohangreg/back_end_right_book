@@ -294,7 +294,7 @@ def buscar_avaliacoes_por_livro(request, id):
         return Response({"error": "Livro não encontrado"}, status=status.HTTP_400_BAD_REQUEST)
     
     reviews = Reviews.objects.filter(livro=id)
-
+   
     serialized_reviews = ReviewsSerializer(reviews, many=True)
 
     return Response(serialized_reviews.data, status=status.HTTP_200_OK)
