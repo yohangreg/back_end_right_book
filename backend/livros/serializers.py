@@ -19,5 +19,5 @@ class UserSerializer(serializers.ModelSerializer):
 class WishListSerializer(serializers.ModelSerializer):
     class Meta:
         model = WishList
-        fields = '__all__'
+        fields = ['id', 'usuario', 'livro']
         db_table = "Wish_List"

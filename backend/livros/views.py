@@ -241,20 +241,28 @@ def buscar_livro(request):
 @permission_classes([AllowAny])
 def buscar_id(request, id):
     """
-    Busca um livro pelo ID na API do Google Books e retorna informações formatadas.
+    Busca um livro pelo ID na API do Google Books e retorna informações formatadas em JSON.
     """
+    livro = buscar_livro_por_id(id)
+
+    if not livro:
+        return Response({"error": "Erro ao buscar livro."}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response(livro, status=status.HTTP_200_OK)
+
+def buscar_livro_por_id(livro_id):
     headers = {
         "key": GOOGLE_BOOKS_API_KEY
     }
-    response = requests.get(f"{GOOGLE_BOOKS_API_URL}/{id}", headers=headers)
-
-    if response.status_code != 200:
-        return Response({"error": "Erro ao buscar livro."}, status=response.status_code)
+    response = requests.get(f"{GOOGLE_BOOKS_API_URL}/{livro_id}", headers=headers)
     
+    if response.status_code != 200:
+        return None
+
     data = response.json()
     volume_info = data.get("volumeInfo", {})
     
-    livro_formatado = {
+    return {
         "id": data.get("id"),
         "isbn": volume_info.get("industryIdentifiers", "ISBNs não informados"),
         "titulo": volume_info.get("title", "Título não disponível"),
@@ -265,8 +273,6 @@ def buscar_id(request, id):
         "categorias": volume_info.get("categories", []),
         "imagem": volume_info.get("imageLinks", {}).get("thumbnail", None)
     }
-    
-    return Response(livro_formatado, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -275,13 +281,10 @@ def buscar_avaliacoes_por_usuario(request, id):
         return Response({"error": "Usuário não encontrado"}, status=status.HTTP_400_BAD_REQUEST)
     
     reviews = Reviews.objects.filter(usuario=id)
-
-    if not reviews.exists():
-        return Response({"error": "Nenhuma avaliação encontrada para este usuário"}, status=status.HTTP_404_NOT_FOUND)
-
     serialized_reviews = ReviewsSerializer(reviews, many=True)
 
     return Response(serialized_reviews.data, status=status.HTTP_200_OK)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -292,9 +295,34 @@ def buscar_avaliacoes_por_livro(request, id):
     
     reviews = Reviews.objects.filter(livro=id)
 
-    if not reviews.exists():
-        return Response({"error": "Nenhuma avaliação encontrada para este livro"}, status=status.HTTP_404_NOT_FOUND)
-    
     serialized_reviews = ReviewsSerializer(reviews, many=True)
 
     return Response(serialized_reviews.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def buscar_lista_desejos_por_usuario(request, id):
+    if not id:
+        return Response({"error": "Usuário não encontrado"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    wish_list = WishList.objects.filter(usuario=id)
+    resultado = []
+
+    for item in wish_list:
+        livro_api = buscar_livro_por_id(item.livro)
+
+        if not livro_api:
+            continue  # pula caso o livro não seja encontrado na API
+
+        nota = search_review_by_book(item.livro)
+        
+        resultado.append({
+            "id": item.id,
+            "usuario": item.usuario.id,
+            "livro": item.livro,
+            "titulo": livro_api.get("titulo", "Título não disponível"),
+            "descricao": livro_api.get("descricao", "Sem descrição"),
+            "nota": nota
+        })
+
+    return Response(resultado, status=status.HTTP_200_OK)

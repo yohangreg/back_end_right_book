@@ -23,3 +23,6 @@ urlpatterns += [
     path('search/reviews/books/<str:id>', views.buscar_avaliacoes_por_livro, name='buscar_avaliacoes_por_livro'),
 ]
 
+urlpatterns += [
+    path('search/wish_list/users/<int:id>', views.buscar_lista_desejos_por_usuario, name='buscar_lista_desejos_por_usuario'),
+]
